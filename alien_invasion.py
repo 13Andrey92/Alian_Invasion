@@ -4,6 +4,7 @@ from random import randint
 
 from settings import Settings
 from game_stats import GameStats
+from scoreboard import Scoreboard
 from button import  Button
 from star import Star
 from ship import Ship
@@ -18,14 +19,15 @@ class AlienInvasion():
         self.settings = Settings()# Применяем настройки из модуля settings
 
         # Полноэкранный режим
-        self.screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
-        self.settings.screen_width = self.screen.get_rect().width
-        self.settings.screen_height = self.screen.get_rect().height
-        # Оконный режим
-        # self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
+        # self.screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
+        # self.settings.screen_width = self.screen.get_rect().width
+        # self.settings.screen_height = self.screen.get_rect().height
+        # # Оконный режим
+        self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
         pygame.display.set_caption('Alien Invasion')
 
         self.stats = GameStats(self) # Создаем экземпляр для хранения статистики
+        self.sb = Scoreboard(self) # Создаем экземпляр для хранения панели результатов
 
         self.ship = Ship(self) # Создаем экземпляр класса Ship
         self.bullets = pygame.sprite.Group() # Создаем группу для хранения всех летящих снарядов
@@ -124,6 +126,7 @@ class AlienInvasion():
         # Сброс игровой статистики
         self.stats.reset_stats()
         self.stats.game_active = True
+        self.sb.prep_score() # Обнуляем количество очков
 
         # Очистка списков пришельцев и снарядов
         self.aliens.empty()
@@ -184,6 +187,11 @@ class AlienInvasion():
     def _check_bullet_alien_collisions(self):
         # При попадании удаляется снаряд и пришелец
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
+
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+            self.sb.prep_score()
 
         if not self.aliens:
             # Уничтожение существующих снарядов
@@ -307,6 +315,8 @@ class AlienInvasion():
             bullet.draw_bullet()
         # Отображаем корабль пришельца
         self.aliens.draw(self.screen)
+        # Вывод информации о счете
+        self.sb.show_score()
         # Отображение кнопки Play, если игра не активна
         if not self.stats.game_active:
             self.play_button.draw_button()
