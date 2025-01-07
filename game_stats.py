@@ -6,6 +6,8 @@ class GameStats():
         self.reset_stats()
         # Игра запускается в активном состоянии
         self.game_active = False
+        # Рекордный счет
+        self.high_score = 0
 
     '''Инициализирует статистику, зменяющуюся в ходе игры'''
     def reset_stats(self):

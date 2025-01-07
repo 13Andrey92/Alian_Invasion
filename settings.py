@@ -42,14 +42,14 @@ class Settings():
             self.ship_speed = 1.5
             self.bullet_speed = 2.5
             self.alien_speed = 1.0
-            self.alien_points = 20 # Подсчет очков
+            self.alien_points = 30 # Подсчет очков
         elif self.difficult_level == 'difficult':
             self.ship_limit = 1
             self.bullets_allowed = 5
             self.ship_speed = 3.0
             self.bullet_speed = 5.0
-            self.alien_speed = 1.8
-            self.alien_points = 30 # Подсчет очков
+            self.alien_speed = 1.6
+            self.alien_points = 250 # Подсчет очков
 
         self.fleet_direction = 1  # Движение вправо
 

@@ -155,7 +155,6 @@ class AlienInvasion():
         elif (event.key == pygame.K_p) and (not self.game_active):
             self._start_game()
 
-
     # Отпускание клавиши
     def _check_keyup_events(self, event):
         if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
@@ -192,6 +191,7 @@ class AlienInvasion():
             for aliens in collisions.values():
                 self.stats.score += self.settings.alien_points * len(aliens)
             self.sb.prep_score()
+            self.sb.check_high_score()
 
         if not self.aliens:
             # Уничтожение существующих снарядов
@@ -200,7 +200,6 @@ class AlienInvasion():
             self._create_fleet()
             # Повышение скорости игры
             self.settings.increase_speed()
-
 
     '''Проверяет, достиг ли флот края экрана, с последующим изменением позиций всех пришельцев во флоте'''
     def _update_alience(self):
