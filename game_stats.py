@@ -8,6 +8,7 @@ class GameStats():
         self.game_active = False
         # Рекордный счет
         self.high_score = 0
+        self.level = 1
 
     '''Инициализирует статистику, зменяющуюся в ходе игры'''
     def reset_stats(self):

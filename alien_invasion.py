@@ -127,6 +127,8 @@ class AlienInvasion():
         self.stats.reset_stats()
         self.stats.game_active = True
         self.sb.prep_score() # Обнуляем количество очков
+        self.sb.prep_level() # Отображение количества уровней
+        self.sb.prep_ships() # Отображаем количество кораблей
 
         # Очистка списков пришельцев и снарядов
         self.aliens.empty()
@@ -200,6 +202,9 @@ class AlienInvasion():
             self._create_fleet()
             # Повышение скорости игры
             self.settings.increase_speed()
+            # Увеличение уровня
+            self.stats.level += 1
+            self.sb.prep_level()
 
     '''Проверяет, достиг ли флот края экрана, с последующим изменением позиций всех пришельцев во флоте'''
     def _update_alience(self):
@@ -216,6 +221,7 @@ class AlienInvasion():
         if self.stats.ships_left > 0:
             # Уменьшение ship_left
             self.stats.ships_left -= 1
+            self.sb.prep_ships() # Обновление отображения количества кораблей
 
             # Очистка списков пришельцев и снарядов
             self.aliens.empty()
@@ -247,11 +253,11 @@ class AlienInvasion():
         # Определяем высоту и ширину корабля пришельца
         alien_width, alien_height = alien.rect.size
         # Вычисляем доступное горизонтальное пространство и количество кораблей пришельцев в ряде
-        available_space_x = self.settings.screen_width - (2 * alien_width)
+        available_space_x = self.settings.screen_width - (3 * alien_width)
         number_aliens_x = available_space_x // (2 * alien_width)
         # Определяем количество рядов, помещающихся на экране
         ship_height = self.ship.rect.height
-        available_space_y = (self.settings.screen_height - (4 * alien_height) - ship_height)
+        available_space_y = (self.settings.screen_height - (5 * alien_height) - ship_height)
         number_rows = available_space_y // (2 * alien_height)
         # Создание флота кораблей пришельцев
         for row_number in range(number_rows):
@@ -262,9 +268,9 @@ class AlienInvasion():
     def _create_alien(self, alien_number, row_number):
         alien = Alien(self)
         alien_width, alien_height = alien.rect.size
-        alien.x = alien_width + 2 * alien_width * alien_number
+        alien.x = 2.5 * alien_width + 2 * alien_width * alien_number
         alien.rect.x = alien.x
-        alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+        alien.rect.y = 1.5 * alien.rect.height + 2 * alien.rect.height * row_number
         self.aliens.add(alien)
 
     '''Реагирует на достижение пришельцем края экрана'''
@@ -308,14 +314,15 @@ class AlienInvasion():
         self.screen.fill(self.settings.bg_color)
         # Отображаем звездное небо
         self.stars.draw(self.screen)
+        # Вывод информации о счете
+        self.sb.show_score()
         self.ship.blitme()
         # Отображаем все выпущенные снаряды
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
         # Отображаем корабль пришельца
         self.aliens.draw(self.screen)
-        # Вывод информации о счете
-        self.sb.show_score()
+
         # Отображение кнопки Play, если игра не активна
         if not self.stats.game_active:
             self.play_button.draw_button()

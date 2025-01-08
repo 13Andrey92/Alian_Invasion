@@ -1,15 +1,21 @@
 import pygame
+from pygame import sprite
+from pygame.examples.cursors import image
+from pygame.sprite import Sprite
 
-class Ship():
+
+class Ship(Sprite):
 
     def __init__(self, ai_game):
         # Инициализируем корабль и задаем начальную позицию
+        super().__init__()
         self.screen = ai_game.screen
         self.settings = ai_game.settings
         self.screen_rect = ai_game.screen.get_rect()
 
         # Загружаем корабль и получаем прямоугольник
         self.image = pygame.image.load('images/cosmoship.bmp')
+        self.image = pygame.transform.scale(self.image, (50, 50)) # Устанавливаем размер картинки
         self.rect = self.image.get_rect()
 
         # Каждый новый корабль появляется у нижнего края экрана
