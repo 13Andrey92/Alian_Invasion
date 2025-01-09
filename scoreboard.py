@@ -1,3 +1,5 @@
+from turtledemo.sorting_animate import disable_keys
+
 import pygame.font
 from pygame.examples.cursors import image
 from pygame.sprite import Group
@@ -12,10 +14,14 @@ class Scoreboard():
         self.screen_rect = self.screen.get_rect()
         self.settings = ai_game.settings
         self.stats = ai_game.stats
-
         # Настройка шрифта для вывода счета
         self.text_color = (30, 30, 30)
         self.font = pygame.font.SysFont(None, 48)
+
+        self.prep_images()
+
+    '''Отображение игровой информации'''
+    def prep_images(self):
         # Подготовка исходного изображения
         self.prep_score()
         # Подготовка изображения рекордного счета
@@ -24,11 +30,70 @@ class Scoreboard():
         self.prep_level()
         # Вывод оставшихся кораблей
         self.prep_ships()
+        # Вывод подсказки по управлению игрой
+        self.help_control()
+
+    '''Создаем подсказку по управлению игрой'''
+    def help_control(self):
+        self.move_key()
+        self.fire_key()
+        self.pause_key()
+
+    '''Клавиши движения'''
+    def move_key(self):
+        self.move_text_image = self.font.render('Движение: ',True,
+                                     self.text_color, self.settings.bg_color)
+        self.move_text_rect = self.move_text_image.get_rect()
+        self.move_text_rect.left = self.screen_rect.left + 10
+        self.move_text_rect.bottom = self.screen_rect.bottom - 160
+
+        self.move_left_keys_image = pygame.image.load('images/back.png')
+        self.move_left_keys_image = pygame.transform.scale(self.move_left_keys_image,
+                                                           (50, 40))  # Устанавливаем размер картинки
+        self.move_left_keys_rect = self.move_left_keys_image.get_rect()
+        self.move_left_keys_rect.right = self.move_text_rect.right + 60
+        self.move_left_keys_rect.bottom = self.screen_rect.bottom - 160
+
+        self.move_right_keys_image = pygame.image.load('images/right.png')
+        self.move_right_keys_image = pygame.transform.scale(self.move_right_keys_image,
+                                                            (50, 40)) # Устанавливаем размер картинки
+        self.move_right_keys_rect = self.move_right_keys_image.get_rect()
+        self.move_right_keys_rect.right = self.move_left_keys_rect.right + 60
+        self.move_right_keys_rect.bottom = self.screen_rect.bottom - 160
+
+    '''Клавиша стрельбы'''
+    def fire_key(self):
+        self.fire_text_image = self.font.render('Стрельба: ', True,
+                                                self.text_color, self.settings.bg_color)
+        self.fire_text_rect = self.fire_text_image.get_rect()
+        self.fire_text_rect.left = self.move_text_rect.left
+        self.fire_text_rect.bottom = self.move_text_rect.bottom + 60
+
+        self.fire_keys_image = pygame.image.load('images/space.png')
+        self.fire_keys_image = pygame.transform.scale(self.fire_keys_image, (110, 40))
+        self.fire_keys_rect = self.fire_keys_image.get_rect()
+        self.fire_keys_rect.right = self.fire_text_rect.right + 120
+        self.fire_keys_rect.bottom = self.move_text_rect.bottom + 60
+
+    '''Клавиша паузы'''
+    def pause_key(self):
+        self.pause_text_image = self.font.render('Поставить/снять с паузы: ', True,
+                                                self.text_color, self.settings.bg_color)
+        self.pause_text_rect = self.pause_text_image.get_rect()
+        self.pause_text_rect.left = self.fire_text_rect.left
+        self.pause_text_rect.bottom = self.fire_text_rect.bottom + 60
+
+        self.pause_keys_image = pygame.image.load('images/p.png')
+        self.pause_keys_image = pygame.transform.scale(self.pause_keys_image, (50, 40))
+        self.pause_keys_rect = self.pause_keys_image.get_rect()
+        self.pause_keys_rect.right = self.pause_text_rect.right + 60
+        self.pause_keys_rect.bottom = self.fire_keys_rect.bottom + 60
 
     '''Преобразуем уровень в графическое изображение'''
     def prep_level(self):
         level_str = str(self.stats.level)
-        self.level_image = self.font.render('Уровень ' + level_str, True, self.text_color, self.settings.bg_color)
+        self.level_image = self.font.render('Уровень ' + level_str, True,
+                                            self.text_color, self.settings.bg_color)
 
         # Уровень выводится под текущим счетом
         self.level_rect = self.level_image.get_rect()
@@ -42,7 +107,7 @@ class Scoreboard():
         for ship_number in range(self.stats.ships_left):
             self.ship = pygame.image.load('images/alien.bmp')
             ship = Ship(self.ai_game) # Создаем группу для хранения экземпляров кораблей
-            ship.rect.x = 10 + ship_number * ship.rect.width
+            ship.rect.x = 10 + ship_number * (10 + ship.rect.width)
             ship.rect.y = 10
 
             self.ships.add(ship)
@@ -81,3 +146,13 @@ class Scoreboard():
         self.screen.blit(self.high_score_image, self.high_score_rect)
         self.screen.blit(self.level_image, self.level_rect)
         self.ships.draw(self.screen)
+
+    '''Вывод подсказки по управлению на начальный экран'''
+    def show_control(self):
+        self.screen.blit(self.move_text_image, self.move_text_rect)
+        self.screen.blit(self.move_left_keys_image, self.move_left_keys_rect)
+        self.screen.blit(self.move_right_keys_image, self.move_right_keys_rect)
+        self.screen.blit(self.fire_text_image, self.fire_text_rect)
+        self.screen.blit(self.fire_keys_image, self.fire_keys_rect)
+        self.screen.blit(self.pause_text_image, self.pause_text_rect)
+        self.screen.blit(self.pause_keys_image, self.pause_keys_rect)

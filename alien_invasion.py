@@ -1,4 +1,6 @@
 import sys, pygame
+import json
+from pathlib import Path
 from time import sleep
 from random import randint
 
@@ -40,9 +42,10 @@ class AlienInvasion():
 
         # Создание кнопки Play
         self.play_button = Button(self, 'Play')
-
-        # Создание кнопки уровня сложности
+        # Создание кнопок уровня сложности
         self._make_difficulty_buttons()
+        # Создание кнопки Exit
+        self.exit_key_button()
 
         self.game_active = False #???
 
@@ -63,9 +66,14 @@ class AlienInvasion():
         # Инициализируем среднюю кнопку выделенным цветом
         self.medium_button.set_highlighted_color()
 
+    '''Создание кнопки выхода'''
+    def exit_key_button(self):
+        self.exit_button = Button(self, 'Exit')
+        self.exit_button.rect.top = (self.difficult_button.rect.top + 1.5 * self.difficult_button.rect.height)
+        self.exit_button._update_msg_position()
+
     '''Запуск основного цикла'''
     def run_game(self):
-
         while True:
             # Методы, начинающиеся с "_" - вспомогательные методы
             self._check_events() # События клавиатуры и мыши
@@ -80,7 +88,7 @@ class AlienInvasion():
     def _check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                sys.exit()
+                self._close_game()
             elif event.type == pygame.KEYDOWN:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
@@ -88,6 +96,7 @@ class AlienInvasion():
             elif event.type == pygame.MOUSEBUTTONDOWN: # Обнаруживаем события мышки при нажатии на кнопку
                 mouse_pos = pygame.mouse.get_pos()
                 self._check_play_button(mouse_pos)
+                self._check_exit_button(mouse_pos)
                 self._check_difficulty_buttons(mouse_pos)
 
     '''Запускаем игру при нажатии на Play'''
@@ -96,6 +105,12 @@ class AlienInvasion():
         button_clicked = self.play_button.rect.collidepoint(mouse_pos)
         if button_clicked and not self.stats.game_active:
             self._start_game()
+
+    '''Выходим из игры при нажатии Exit'''
+    def _check_exit_button(self, mouse_pos):
+        exit_clicked = self.exit_button.rect.collidepoint(mouse_pos)
+        if exit_clicked:
+            self._close_game()
 
     '''Выбираем подходящий уровень сложности'''
     def _check_difficulty_buttons(self, mouse_pos):
@@ -126,9 +141,8 @@ class AlienInvasion():
         # Сброс игровой статистики
         self.stats.reset_stats()
         self.stats.game_active = True
-        self.sb.prep_score() # Обнуляем количество очков
-        self.sb.prep_level() # Отображение количества уровней
-        self.sb.prep_ships() # Отображаем количество кораблей
+        # Обнуляем количество очков, отображаем уровень и количество кораблей
+        self.sb.prep_images()
 
         # Очистка списков пришельцев и снарядов
         self.aliens.empty()
@@ -141,27 +155,29 @@ class AlienInvasion():
         # Скрываем указатель мыши
         pygame.mouse.set_visible(False)
 
-    # Нажатие клавиши
+    '''Нажатие клавиши'''
     def _check_keydown_events(self, event):
-        if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+        if event.key == pygame.K_RIGHT:
             self.ship.moving_right = True
-        elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+        elif event.key == pygame.K_LEFT:
             self.ship.moving_left = True
-        # Клавиша выхода
-        elif event.key == pygame.K_ESCAPE:
-            sys.exit()
         # Клавиша стрельбы
         elif event.key == pygame.K_SPACE:
             self._fire_bullet()
-        # Запуск игры клавишей P
-        elif (event.key == pygame.K_p) and (not self.game_active):
-            self._start_game()
+        # Пауза игры клавишей P
+        elif event.key == pygame.K_p:
+            if self.stats.game_active:
+                self.stats.game_active = not True
+                pygame.mouse.set_visible(True)
+            else:
+                self.stats.game_active = True
+                pygame.mouse.set_visible(False)
 
-    # Отпускание клавиши
+    '''Отпускание клавиши'''
     def _check_keyup_events(self, event):
-        if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+        if event.key == pygame.K_RIGHT:
             self.ship.moving_right = False
-        elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+        elif event.key == pygame.K_LEFT:
             self.ship.moving_left = False
 
     ''' Создание нового снаряда и включение его в группу bullets'''
@@ -170,7 +186,7 @@ class AlienInvasion():
             new_bullet = Bullet(self)
             self.bullets.add(new_bullet)
 
-    # Обновление позиций снарядов и уничтожение старых снарядов
+    '''Обновление позиций снарядов и уничтожение старых снарядов'''
     def _update_bullets(self):
         # Обновление позиции снарядов
         self.bullets.update()
@@ -184,7 +200,7 @@ class AlienInvasion():
         #         self.bullets.remove(bullet)
         self._check_bullet_alien_collisions()
 
-        '''Проверка попадания в пришельца'''
+    '''Проверка попадания в пришельца'''
     def _check_bullet_alien_collisions(self):
         # При попадании удаляется снаряд и пришелец
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
@@ -194,8 +210,11 @@ class AlienInvasion():
                 self.stats.score += self.settings.alien_points * len(aliens)
             self.sb.prep_score()
             self.sb.check_high_score()
-
         if not self.aliens:
+            self.start_new_level()
+
+    '''Запуск нового уровня при уничтожении флота'''
+    def start_new_level(self):
             # Уничтожение существующих снарядов
             self.bullets.empty()
             # Создание нового флота
@@ -237,7 +256,7 @@ class AlienInvasion():
             self.stats.game_active = False
             pygame.mouse.set_visible(True)
 
-        '''Проверяем, добрались ли пришельцы до нижнего края экрана'''
+    '''Проверяем, добрались ли пришельцы до нижнего края экрана'''
     def _check_aliens_bottom(self):
         screen_rect = self.screen.get_rect()
         for alien in self.aliens.sprites():
@@ -264,7 +283,7 @@ class AlienInvasion():
             for alien_number in range(number_aliens_x):
                 self._create_alien(alien_number, row_number)
 
-        # Создание пришельца и размещение его в ряду
+    '''Создание пришельца и размещение его в ряду'''
     def _create_alien(self, alien_number, row_number):
         alien = Alien(self)
         alien_width, alien_height = alien.rect.size
@@ -310,7 +329,6 @@ class AlienInvasion():
 
     '''Обновление экрана при каждом проходе цикла'''
     def _update_screen(self):
-
         self.screen.fill(self.settings.bg_color)
         # Отображаем звездное небо
         self.stars.draw(self.screen)
@@ -323,15 +341,28 @@ class AlienInvasion():
         # Отображаем корабль пришельца
         self.aliens.draw(self.screen)
 
-        # Отображение кнопки Play, если игра не активна
+        # Отображение кнопок, если игра не активна
         if not self.stats.game_active:
             self.play_button.draw_button()
             self.easy_button.draw_button()
             self.medium_button.draw_button()
             self.difficult_button.draw_button()
+            self.exit_button.draw_button()
+
+            self.sb.show_control() # Подсказка в управлении
 
         # Отображение последнего прорисованного экрана
         pygame.display.flip()
+
+    '''Сохранение рекорда и выход'''
+    def _close_game(self):
+        saved_high_score = self.stats.get_saved_high_score()
+        if self.stats.high_score > saved_high_score:
+            path = Path('high_score.json')
+            contents = json.dumps(self.stats.high_score)
+            path.write_text(contents)
+
+        sys.exit()
 
 if __name__ == '__main__':
     # Создаем экземпляр
